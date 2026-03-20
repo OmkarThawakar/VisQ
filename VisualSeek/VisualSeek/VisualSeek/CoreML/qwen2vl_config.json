@@ -1,0 +1,22 @@
+{
+  "model_id": "Qwen/Qwen3-VL-2B-Instruct",
+  "num_visual_tokens": 196,
+  "patch_flat_size": 1536,
+  "patches_per_side": 28,
+  "image_start_index": 15,
+  "prompt_length": 285,
+  "max_new_tokens": 200,
+  "hidden_size": 2048,
+  "num_layers": 28,
+  "num_kv_heads": 8,
+  "head_dim": 128,
+  "vocab_size": 151936,
+  "eos_token_id": 151645,
+  "image_pad_id": 151655,
+  "vision_start_id": 151652,
+  "vision_end_id": 151653,
+  "im_start_id": 151644,
+  "im_end_id": 151645,
+  "num_deepstack": 3,
+  "kv_cache_format": "separate_keys_vals"
+}
