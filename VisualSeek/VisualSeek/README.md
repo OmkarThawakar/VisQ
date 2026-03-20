@@ -1,5 +1,9 @@
 # VisQ (VisualSeek iOS)
 
+<p align="center">
+  <img src="VisualSeek/Assets.xcassets/AppLogo.imageset/app-logo-1024.png" width="120" alt="VisQ logo" />
+</p>
+
 > Intelligent on-device photo and video retrieval for iPhone, based on CoVR-R and powered by a bundled Qwen3-VL-2B Core ML runtime.
 
 [![Platform](https://img.shields.io/badge/platform-iOS%2017%2B-blue)](https://developer.apple.com/ios/)
@@ -7,7 +11,7 @@
 [![Core ML](https://img.shields.io/badge/runtime-Core%20ML-black)](https://developer.apple.com/documentation/coreml)
 [![Model](https://img.shields.io/badge/model-Qwen3--VL--2B-green)](https://huggingface.co/Qwen)
 
-## Screenshots
+## 📱 App Preview
 
 <p align="center">
   <img src="../../docs/screenshots/1.png" width="240" alt="VisQ screenshot 1" />
@@ -20,7 +24,18 @@
   <img src="../../docs/screenshots/6.png" width="240" alt="VisQ screenshot 6" />
 </p>
 
-## Overview
+## ✨ At A Glance
+
+<table>
+  <tr>
+    <td align="center" width="25%"><strong>🧠 On-Device AI</strong><br/>Qwen3-VL-2B Core ML runtime for local retrieval.</td>
+    <td align="center" width="25%"><strong>🔎 Smart Search</strong><br/>Text search plus composed retrieval with a reference image.</td>
+    <td align="center" width="25%"><strong>💡 Explainable Results</strong><br/>"Why This Matched" chips and detail-view reasoning.</td>
+    <td align="center" width="25%"><strong>🔒 Privacy-First</strong><br/>Embeddings, ranking, and inference stay on device.</td>
+  </tr>
+</table>
+
+## ✨ Overview
 
 **VisQ** is the user-facing iPhone app name. The codebase and Xcode target remain named **VisualSeek**.
 
@@ -36,7 +51,7 @@ The app brings reason-aware visual retrieval to iPhone with a privacy-first desi
 
 The current production path prefers bundled Core ML models at startup, using `QwenVisionEncoder` and `QwenTextFusion` to back the Qwen3-VL-2B runtime. If the bundled models are unavailable, the app can fall back to lighter local adapters so development is still possible.
 
-## What The App Does
+## 🔎 What The App Does
 
 ### 1. Library Indexing
 
@@ -74,7 +89,7 @@ After results appear, the app surfaces a "Why This Matched" layer with:
 
 Media, embeddings, retrieval logic, and runtime inference all stay on device. The app does not require a server round-trip to index or search your library.
 
-## Feature Highlights
+## 🌟 Feature Highlights
 
 | Feature | Description |
 |---|---|
@@ -86,7 +101,7 @@ Media, embeddings, retrieval logic, and runtime inference all stay on device. Th
 | On-Device Runtime | Bundled Core ML runtime for Qwen3-VL-2B path |
 | Offline-First | Retrieval still works without network access |
 
-## System Architecture
+## 🏗️ System Architecture
 
 ### High-Level System Design
 
@@ -155,7 +170,7 @@ Input Image / Video Frame
 
 For composed retrieval, the app combines the reference-image embedding with text guidance and generates a reasoned target representation before running vector search. That is also where the "Why This Matched" explanation layer is assembled for result cards and the detail screen.
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```text
 VisualSeek/
@@ -175,7 +190,7 @@ VisualSeek/
 └── VisualSeekUITests/
 ```
 
-## Requirements
+## ✅ Requirements
 
 - macOS 14 or newer
 - Xcode 16 or newer
@@ -190,7 +205,7 @@ Recommended for the best real-device experience:
 - Full Photo Library access on first launch
 - Device connected to power for larger indexing runs
 
-## Setup
+## 🚀 Setup
 
 ### 1. Clone The Repository
 
@@ -243,7 +258,10 @@ The repo may also contain optional Qwen2VL generation assets:
 
 These optional assets support richer generation and description flows when available, but the main retrieval runtime is the bundled Qwen3-VL-2B Core ML path.
 
-## Core ML Model Conversion
+## 🛠️ Core ML Model Conversion
+
+<details>
+<summary><strong>Expand model export and conversion steps</strong></summary>
 
 If you already pulled the bundled `.mlpackage` files through Git LFS, you can skip this section. These steps are only needed when you want to regenerate the Core ML assets from source.
 
@@ -329,7 +347,9 @@ python validate_coreml.py \
 - The current Qwen3-VL conversion path in this repo is based on TorchScript export plus `coremltools` conversion.
 - The generated Core ML packages should replace the runtime assets loaded by `ModelLoader` at app startup.
 
-## Running In Xcode
+</details>
+
+## 📲 Running In Xcode
 
 ### Simulator
 
@@ -364,7 +384,7 @@ For the smoothest first run on iPhone:
 - stay on power if you are indexing a large library
 - expect the first run to take longer while models are loaded and caches warm up
 
-## How To Use The App
+## 🧭 How To Use The App
 
 ### Index Your Library
 
@@ -382,7 +402,7 @@ Choose a reference image, enter a modification prompt, and run retrieval. The ap
 
 Tap any result to open the media detail view. The detail screen shows the selected asset along with the explanation layer that describes why it matched.
 
-## Current Runtime Behavior
+## 🧠 Current Runtime Behavior
 
 The app currently prefers the bundled Core ML runtime on startup:
 
@@ -392,14 +412,14 @@ The app currently prefers the bundled Core ML runtime on startup:
 
 If the bundled models cannot load, the app falls back to lightweight local adapters so the app still launches. That fallback is primarily intended for resilience and development, not for the ideal production experience.
 
-## Storage And Retrieval Notes
+## 💾 Storage And Retrieval Notes
 
 - embeddings are stored locally in SQLite-backed storage
 - vector search is performed on-device
 - cached embeddings may be cleared automatically if the stored embedding format no longer matches the current runtime
 - photo-library permission is required for indexing and retrieval over user assets
 
-## Testing And Validation
+## 🧪 Testing And Validation
 
 Build from the repository root:
 
@@ -419,7 +439,10 @@ The repository includes:
 - UI tests in `VisualSeekUITests/`
 - production-readiness checks for key runtime assumptions
 
-## Troubleshooting
+## 🩺 Troubleshooting
+
+<details>
+<summary><strong>Expand troubleshooting guide</strong></summary>
 
 ### The App Builds But Models Do Not Load
 
@@ -445,7 +468,9 @@ The repository includes:
 - simulator is much slower than iPhone hardware
 - larger libraries naturally take longer to index
 
-## Privacy
+</details>
+
+## 🔒 Privacy
 
 VisQ is designed as a local-first retrieval app:
 
@@ -454,7 +479,7 @@ VisQ is designed as a local-first retrieval app:
 - inference runs locally through Core ML
 - the app does not require cloud inference to retrieve results
 
-## Research Context
+## 📚 Research Context
 
 The original paper focuses on reason-aware composed retrieval, where a system first builds an intermediate understanding of how a target scene should change and then retrieves the closest match. VisQ brings that same general approach into a local-first mobile app with:
 
@@ -462,14 +487,14 @@ The original paper focuses on reason-aware composed retrieval, where a system fi
 - reasoning-guided target representation
 - explanation-aware result presentation through the "Why This Matched" layer
 
-## Roadmap
+## 🛣️ Roadmap
 
 - improve production hardening for background indexing
 - expand diagnostics and test coverage
 - improve real-device retrieval explainability
 - continue tuning bundled on-device model performance
 
-## Citation
+## 📖 Citation
 
 If you use or reference the research basis for this app, please cite **CoVR-R: Reason-Aware Composed Video Retrieval**.
 
@@ -482,7 +507,7 @@ If you use or reference the research basis for this app, please cite **CoVR-R: R
 }
 ```
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
 This repository was developed with ideas, references, and implementation inspiration drawn from the broader on-device ML and Qwen ecosystem, including:
 
@@ -492,7 +517,7 @@ This repository was developed with ideas, references, and implementation inspira
 
 This work also benefited from the use of modern AI-assisted development tools during implementation, including **Antigravity**, **Codex**, and **Claude**, which were used to help translate core ideas into working code and documentation.
 
-## License
+## ⚖️ License
 
 Apache 2.0. See `LICENSE`.
 
