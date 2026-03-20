@@ -7,6 +7,19 @@
 [![Core ML](https://img.shields.io/badge/runtime-Core%20ML-black)](https://developer.apple.com/documentation/coreml)
 [![Model](https://img.shields.io/badge/model-Qwen3--VL--2B-green)](https://huggingface.co/Qwen)
 
+## App Preview
+
+<p align="center">
+  <img src="./docs/screenshots/1.png" width="240" alt="VisQ screenshot 1" />
+  <img src="./docs/screenshots/2.png" width="240" alt="VisQ screenshot 2" />
+  <img src="./docs/screenshots/3.png" width="240" alt="VisQ screenshot 3" />
+</p>
+<p align="center">
+  <img src="./docs/screenshots/4.png" width="240" alt="VisQ screenshot 4" />
+  <img src="./docs/screenshots/5.png" width="240" alt="VisQ screenshot 5" />
+  <img src="./docs/screenshots/6.png" width="240" alt="VisQ screenshot 6" />
+</p>
+
 ## Overview
 
 **VisQ** is the user-facing iPhone app name. The codebase and Xcode target remain named **VisualSeek**.
@@ -79,18 +92,18 @@ Media, embeddings, retrieval logic, and runtime inference all stay on device. Th
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                           VisQ iOS App                         │
+│                           VisQ iOS App                          │
 │                                                                 │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐    │
-│  │  Photo/Video │   │   Indexing   │   │    Retrieval     │    │
-│  │   Picker UI  │──▶│   Pipeline   │──▶│     Engine       │    │
-│  └──────────────┘   └──────┬───────┘   └────────┬─────────┘    │
-│                            │                    │              │
-│                   ┌────────▼────────┐  ┌────────▼──────────┐   │
-│                   │  Qwen3-VL-2B    │  │  Vector Index     │   │
-│                   │  Vision Runtime │  │  On-device SQLite │   │
-│                   │  (Core ML)      │  │  + similarity     │   │
-│                   └─────────────────┘  └───────────────────┘   │
+│  ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐     │
+│  │  Photo/Video │   │   Indexing   │   │    Retrieval     │     │
+│  │   Picker UI  │──▶│   Pipeline   │──▶│     Engine       │     │
+│  └──────────────┘   └──────┬───────┘   └────────┬─────────┘     │
+│                            │                    │               │
+│                   ┌────────▼────────┐  ┌────────▼──────────┐    │
+│                   │  Qwen3-VL-2B    │  │  Vector Index     │    │
+│                   │  Vision Runtime │  │  On-device SQLite │    │
+│                   │  (Core ML)      │  │  + similarity     │    │
+│                   └─────────────────┘  └───────────────────┘    │
 │                                                                 │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │              Composed Retrieval Module                   │   │
@@ -182,8 +195,8 @@ Recommended for the best real-device experience:
 ### 1. Clone The Repository
 
 ```bash
-git clone https://github.com/<your-org>/visq.git
-cd visq
+git clone https://github.com/OmkarThawakar/VisQ.git
+cd VisQ
 ```
 
 ### 2. Install Git LFS
@@ -229,6 +242,92 @@ The repo may also contain optional Qwen2VL generation assets:
 - `Qwen2VLDecodeStep.mlpackage`
 
 These optional assets support richer generation and description flows when available, but the main retrieval runtime is the bundled Qwen3-VL-2B Core ML path.
+
+## Core ML Model Conversion
+
+If you already pulled the bundled `.mlpackage` files through Git LFS, you can skip this section. These steps are only needed when you want to regenerate the Core ML assets from source.
+
+### 1. Install Python Dependencies
+
+From the repository root:
+
+```bash
+cd ModelConversion
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 2. Export The Qwen3-VL Vision Tower
+
+This exports the vision side of `Qwen/Qwen3-VL-2B-Instruct` to TorchScript for the current iOS retrieval pipeline.
+
+```bash
+python export_qwen3_vl_vision.py \
+  --model_id Qwen/Qwen3-VL-2B-Instruct \
+  --output_dir ./real_exports \
+  --input_resolution 448 \
+  --output_dim 1536
+```
+
+Expected output:
+
+- `ModelConversion/real_exports/qwen3_vl_vision_encoder.pt`
+
+### 3. Export The Text Fusion Encoder
+
+This produces the pooled text-side fusion representation used by the current retrieval runtime.
+
+```bash
+python export_qwen3_vl_text_fusion.py \
+  --model_id Qwen/Qwen3-VL-2B-Instruct \
+  --output_dir ./real_exports \
+  --output_dim 1536 \
+  --max_tokens 32
+```
+
+Expected output:
+
+- `ModelConversion/real_exports/qwen3_vl_text_fusion.pt`
+
+### 4. Convert TorchScript To Core ML
+
+Convert the exported TorchScript files into the Core ML packages used by the app:
+
+```bash
+python convert_to_coreml.py \
+  --torchscript_path ./real_exports/qwen3_vl_vision_encoder.pt \
+  --output_path ../VisualSeek/VisualSeek/VisualSeek/CoreML/QwenVisionEncoder.mlpackage \
+  --compute_units ALL \
+  --input_resolution 448 \
+  --embedding_dim 1536
+```
+
+```bash
+python convert_to_coreml.py \
+  --mode text_fusion \
+  --torchscript_path ./real_exports/qwen3_vl_text_fusion.pt \
+  --output_path ../VisualSeek/VisualSeek/VisualSeek/CoreML/QwenTextFusion.mlpackage \
+  --compute_units ALL \
+  --embedding_dim 1536
+```
+
+### 5. Optional Sanity Check
+
+You can do a quick load test on the generated vision package:
+
+```bash
+python validate_coreml.py \
+  --model_path ../VisualSeek/VisualSeek/VisualSeek/CoreML/QwenVisionEncoder.mlpackage \
+  --input_resolution 448 \
+  --embedding_dim 1536
+```
+
+### Notes
+
+- The first export may take time because the Hugging Face weights need to be downloaded into the local cache.
+- The current Qwen3-VL conversion path in this repo is based on TorchScript export plus `coremltools` conversion.
+- The generated Core ML packages should replace the runtime assets loaded by `ModelLoader` at app startup.
 
 ## Running In Xcode
 
@@ -389,6 +488,16 @@ If you use or reference the research basis for this app, please cite **CoVR-R: R
   year = {2026}
 }
 ```
+
+## Acknowledgements
+
+This repository was developed with ideas, references, and implementation inspiration drawn from the broader on-device ML and Qwen ecosystem, including:
+
+- [ANE](https://github.com/maderix/ANE)
+- [Anemll](https://github.com/Anemll/Anemll)
+- [Qwen3-VL collection on Hugging Face](https://huggingface.co/collections/Qwen/qwen3-vl)
+
+This work also benefited from the use of modern AI-assisted development tools during implementation, including **Antigravity**, **Codex**, and **Claude**, which were used to help translate core ideas into working code and documentation.
 
 ## License
 
