@@ -49,7 +49,7 @@ The app brings reason-aware visual retrieval to iPhone with a privacy-first desi
 - Show "Why This Matched" explanations on retrieved results
 - Keep embeddings, ranking, and inference on-device
 
-The current production path prefers bundled Core ML models at startup, using `QwenVisionEncoder` and `QwenTextFusion` to back the Qwen3-VL-2B runtime. If the bundled models are unavailable, the app can fall back to lighter local adapters so development is still possible.
+The current production path prefers bundled Core ML models at startup, using `QwenVisionEncoder` and `QwenTextFusion` to back the Qwen3-VL-2B-derived retrieval runtime. The app currently persists normalized 768-dimensional retrieval embeddings. If the bundled models are unavailable, the app can fall back to lighter local adapters so development is still possible.
 
 ## 🔎 What The App Does
 
@@ -140,7 +140,7 @@ Media, embeddings, retrieval logic, and runtime inference all stay on device. Th
 
 ### Model Architecture
 
-The app uses a bundled Core ML runtime built around the Qwen3-VL-2B retrieval path:
+The app uses a bundled Core ML runtime built around the Qwen3-VL-2B retrieval path. Internally, the vision pipeline consumes flattened 1536-value patch tensors, while the current app runtime stores normalized 768-dimensional retrieval embeddings:
 
 ```text
 Input Image / Video Frame
@@ -165,7 +165,7 @@ Input Image / Video Frame
 └─────────────┼───────────────────┘
               │
               ▼
-      1536-dim visual embedding
+      768-dim retrieval embedding
 ```
 
 For composed retrieval, the app combines the reference-image embedding with text guidance and generates a reasoned target representation before running vector search. That is also where the "Why This Matched" explanation layer is assembled for result cards and the detail screen.
@@ -173,21 +173,27 @@ For composed retrieval, the app combines the reference-image embedding with text
 ## 🗂️ Project Structure
 
 ```text
-VisualSeek/
-├── VisualSeek.xcodeproj
-├── VisualSeek-Info.plist
-├── VisualSeek/
-│   ├── App/
-│   ├── Assets.xcassets/
-│   ├── CoreML/
-│   ├── Indexing/
-│   ├── Models/
-│   ├── Resources/
-│   ├── Retrieval/
-│   ├── Utilities/
-│   └── Views/
-├── VisualSeekTests/
-└── VisualSeekUITests/
+VisQ/
+├── README.md
+├── docs/
+├── ModelConversion/
+├── scripts/
+└── VisualSeek/
+    └── VisualSeek/
+        ├── VisualSeek.xcodeproj
+        ├── VisualSeek-Info.plist
+        ├── VisualSeek/
+        │   ├── App/
+        │   ├── Assets.xcassets/
+        │   ├── CoreML/
+        │   ├── Indexing/
+        │   ├── Models/
+        │   ├── Resources/
+        │   ├── Retrieval/
+        │   ├── Utilities/
+        │   └── Views/
+        ├── VisualSeekTests/
+        └── VisualSeekUITests/
 ```
 
 ## ✅ Requirements
@@ -230,7 +236,7 @@ If you skip this step, the app may build with placeholder pointer files instead 
 From the repository root:
 
 ```bash
-open VisualSeek.xcodeproj
+open VisualSeek/VisualSeek/VisualSeek.xcodeproj
 ```
 
 ### 4. Confirm Signing
@@ -245,7 +251,7 @@ In Xcode:
 
 ### 5. Verify Model Assets
 
-Before running, make sure these bundled packages exist under `VisualSeek/CoreML/`:
+Before running, make sure these bundled packages exist under `VisualSeek/VisualSeek/VisualSeek/CoreML/`:
 
 - `QwenVisionEncoder.mlpackage`
 - `QwenTextFusion.mlpackage`
@@ -256,7 +262,7 @@ The repo may also contain optional Qwen2VL generation assets:
 - `Qwen2VLPrefill.mlpackage`
 - `Qwen2VLDecodeStep.mlpackage`
 
-These optional assets support richer generation and description flows when available, but the main retrieval runtime is the bundled Qwen3-VL-2B Core ML path.
+These optional assets support richer generation and description flows when available, but that path is only attempted on iOS 18 or newer. On iOS 17, the app falls back to Vision-based description generation while the main retrieval runtime continues to use the bundled Qwen3-VL-2B Core ML path.
 
 ## 🛠️ Core ML Model Conversion
 
@@ -346,6 +352,7 @@ python validate_coreml.py \
 - The first export may take time because the Hugging Face weights need to be downloaded into the local cache.
 - The current Qwen3-VL conversion path in this repo is based on TorchScript export plus `coremltools` conversion.
 - The generated Core ML packages should replace the runtime assets loaded by `ModelLoader` at app startup.
+- The export and conversion scripts still operate on 1536-value patch tensors; the current app adapter truncates model output to the 768-dimensional retrieval embedding shape used by the app.
 
 </details>
 
@@ -412,6 +419,8 @@ The app currently prefers the bundled Core ML runtime on startup:
 
 If the bundled models cannot load, the app falls back to lightweight local adapters so the app still launches. That fallback is primarily intended for resilience and development, not for the ideal production experience.
 
+For richer generated descriptions, the optional `Qwen2VL` pipeline is only loaded on iOS 18 or newer. On iOS 17, description generation falls back to the Vision-framework path.
+
 ## 💾 Storage And Retrieval Notes
 
 - Embeddings are stored locally in SQLite-backed storage
@@ -424,13 +433,13 @@ If the bundled models cannot load, the app falls back to lightweight local adapt
 Build from the repository root:
 
 ```bash
-xcodebuild -project VisualSeek.xcodeproj -scheme VisualSeek -configuration Debug -sdk iphonesimulator build CODE_SIGNING_ALLOWED=NO
+xcodebuild -project VisualSeek/VisualSeek/VisualSeek.xcodeproj -scheme VisualSeek -configuration Debug -sdk iphonesimulator build CODE_SIGNING_ALLOWED=NO
 ```
 
 Run tests:
 
 ```bash
-xcodebuild test -project VisualSeek.xcodeproj -scheme VisualSeek -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -project VisualSeek/VisualSeek/VisualSeek.xcodeproj -scheme VisualSeek -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 The repository includes:
@@ -447,7 +456,7 @@ The repository includes:
 ### The App Builds But Models Do Not Load
 
 - confirm `git lfs pull` completed successfully
-- confirm the Core ML packages exist under `VisualSeek/CoreML/`
+- confirm the Core ML packages exist under `VisualSeek/VisualSeek/VisualSeek/CoreML/`
 - check that the large `weight.bin` files are real assets, not Git LFS text pointers
 
 ### Xcode Signing Fails

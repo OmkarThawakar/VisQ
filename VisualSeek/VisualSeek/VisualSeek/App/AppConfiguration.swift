@@ -9,7 +9,9 @@ struct AppConfiguration {
     // Keep fewer preprocessed images resident at once to reduce launch/indexing
     // memory pressure on-device.
     var batchSize: Int = 4
-    var embeddingDimension: Int = 1536
+    // The current app runtime persists 768-D retrieval embeddings even though
+    // the underlying vision patch representation uses 1536 values per patch.
+    var embeddingDimension: Int = 768
     
     // Indexing settings
     var indexNewPhotosAutomatically: Bool = true
