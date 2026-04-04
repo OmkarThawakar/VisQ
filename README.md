@@ -1,7 +1,7 @@
 # VisQ (VisualQuery iOS)
 
 <p align="center">
-  <img src="VisualSeek/VisualSeek/VisualSeek/Assets.xcassets/AppLogo.imageset/app-logo-1024.png" width="120" alt="VisQ logo" />
+  <img src="VisualSeek/VisualSeek/VisualSeek/Assets.xcassets/AppLogo.imageset/app-logo.png" width="120" alt="VisQ logo" style="border-radius: 27px;" />
 </p>
 
 > Intelligent on-device photo and video retrieval for iPhone, based on CoVR-R and powered by a bundled Qwen3-VL-2B Core ML runtime.
