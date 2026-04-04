@@ -27,12 +27,12 @@
 	<string>VisQ can save retrieved images back to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>VisQ needs access to your photo library to index and search your photos using on-device AI.</string>
-	<key>UILaunchScreen</key>
-	<dict/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>
 	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
